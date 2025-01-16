@@ -5,7 +5,7 @@
 local pathfinding = {
   _NAME = "Pathfinding",
   _DESCRIPTION = "Library for implementing pathfinding algorithms in GTA:SA",
-  _VERSION = "1.0.0",
+  _VERSION = "1.0.1",
   _RELEASE = "alpha",
   _AUTHOR = "Musaigen <blast.hk/members/194978/>"
 }

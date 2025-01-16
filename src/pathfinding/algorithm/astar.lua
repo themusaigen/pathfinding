@@ -70,7 +70,7 @@ local function find(list, n, configuration)
   for idx = 1, #list do
     local node = list[idx]
 
-    if configuration:Heuristic(node, n) <= configuration.Step then
+    if configuration:Heuristic(node, n) < configuration.Step then
       return true, idx
     end
   end
