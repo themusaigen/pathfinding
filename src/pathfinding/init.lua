@@ -5,7 +5,7 @@
 local pathfinding = {
   _NAME = "Pathfinding",
   _DESCRIPTION = "Library for implementing pathfinding algorithms in GTA:SA",
-  _VERSION = "1.0.1",
+  _VERSION = "1.1.1",
   _RELEASE = "alpha",
   _AUTHOR = "Musaigen <blast.hk/members/194978/>"
 }
@@ -18,8 +18,9 @@ local possible_replaces = {
 ---@class Configuration
 ---@field Validate fun(self: Configuration, point: Vector): boolean
 ---@field Collision fun(self: Configuration, target: Vector, origin: Vector): boolean
----@field Heuristic fun(self: Configuration, node0: Node, node1: Node): number
+---@field Heuristic fun(self: Configuration, target: Vector, origin: Vector): number
 ---@field Neighbors fun(self: Configuration, step: number): Vector[]
+---@field ReachedEnd fun(self: Configuration, end_point: Vector, point: Vector): boolean
 ---@field Step number
 
 ---@class Algorithm

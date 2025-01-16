@@ -26,8 +26,8 @@ local function create_configuration(configuration)
   configuration.Step = configuration.Step or 1.5
 
   -- Default heuristic function.
-  configuration.Heuristic = configuration.Heuristic or function(self, node0, node1)
-    return (node0.point - node1.point):length()
+  configuration.Heuristic = configuration.Heuristic or function(self, target, origin)
+    return (target - origin):length()
   end
 
   -- Default validate function. Checks for height difference.
@@ -58,6 +58,11 @@ local function create_configuration(configuration)
     }
   end
 
+  -- Default function of checking is we reached end.
+  configuration.ReachedEnd = configuration.ReachedEnd or function(self, end_point, point)
+    return self:Heuristic(end_point, point) <= self.Step
+  end
+
   return configuration
 end
 
@@ -70,7 +75,7 @@ local function find(list, n, configuration)
   for idx = 1, #list do
     local node = list[idx]
 
-    if configuration:Heuristic(node, n) < configuration.Step then
+    if configuration:Heuristic(node.point, n.point) < configuration.Step then
       return true, idx
     end
   end
@@ -102,7 +107,7 @@ function astar:process(start, goal, configuration)
     local node = tree:pop()
 
     -- If we too close to the end node, force that case.
-    if configuration:Heuristic(end_node, node) <= configuration.Step then
+    if configuration:ReachedEnd(end_node.point, node.point) then
       -- Mark current node as parent to reconstruct path properly.
       end_node.parent = node
 
@@ -130,7 +135,7 @@ function astar:process(start, goal, configuration)
       -- If we not visited that neighbor already.
       if not find(visited, neighbor, configuration) then
         -- Calculate tentative G score.
-        local tentative = node.g + configuration:Heuristic(neighbor, node)
+        local tentative = node.g + configuration:Heuristic(neighbor.point, node.point)
 
         -- Check is neighbor on tree.
         local success, idx = find(tree:data(), neighbor, configuration)
@@ -140,7 +145,7 @@ function astar:process(start, goal, configuration)
           -- The current path is better than previous one.
           if tentative < nfo.g then
             nfo.g = tentative
-            nfo.h = configuration:Heuristic(end_node, nfo)
+            nfo.h = configuration:Heuristic(end_node.point, nfo.point)
             nfo.f = nfo.g + nfo.h
             nfo.parent = node
 
@@ -149,7 +154,7 @@ function astar:process(start, goal, configuration)
           end
         else
           neighbor.g = tentative
-          neighbor.h = configuration:Heuristic(end_node, neighbor)
+          neighbor.h = configuration:Heuristic(end_node.point, neighbor.point)
           neighbor.f = neighbor.g + neighbor.h
           neighbor.parent = node
 
