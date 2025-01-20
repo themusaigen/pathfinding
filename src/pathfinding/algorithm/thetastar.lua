@@ -13,7 +13,7 @@ local BinaryHeap = require("pathfinding.binaryheap")
 -- Utilities.
 local utility = require("pathfinding.utility")
 
---- Process A* algorithm.
+--- Process Theta* algorithm.
 ---@param start Vector
 ---@param goal Vector
 ---@param configuration Configuration|nil
