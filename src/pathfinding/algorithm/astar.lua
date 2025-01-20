@@ -84,7 +84,7 @@ function astar:process(start, goal, configuration)
             nfo.parent = node
 
             -- Sort all nodes.
-            tree = BinaryHeap.heapify(tree:data())
+            tree:repush(idx, nfo)
           end
         else
           neighbor.g = tentative

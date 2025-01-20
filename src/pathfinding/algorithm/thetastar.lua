@@ -67,12 +67,12 @@ function thetastar:process(start, goal, configuration)
     -- Iterate around all neighbors.
     for _, neighbor in ipairs(neighbors) do
       if not utility.find_node(visited, neighbor, configuration) then
-        local success, key = utility.find_node(tree:data(), neighbor, configuration)
+        local success, idx = utility.find_node(tree:data(), neighbor, configuration)
 
         if not success then
           neighbor.g = math.huge
         else
-          neighbor = tree:get(key)
+          neighbor = tree:get(idx)
         end
 
         if node.parent and configuration:Collision(node.parent.point, neighbor.point) then
@@ -84,10 +84,10 @@ function thetastar:process(start, goal, configuration)
             neighbor.parent = node.parent
 
             if success then
-              tree = BinaryHeap.heapify(tree:data())
-            else
-              tree:push(neighbor)
+              tree:remove(idx)
             end
+
+            tree:push(neighbor)
           end
         else
           local node_score = node.g + configuration:Heuristic(node.point, neighbor.point)
@@ -98,10 +98,10 @@ function thetastar:process(start, goal, configuration)
             neighbor.parent = node
 
             if success then
-              tree = BinaryHeap.heapify(tree:data())
-            else
-              tree:push(neighbor)
+              tree:remove(idx)
             end
+
+            tree:push(neighbor)
           end
         end
       end

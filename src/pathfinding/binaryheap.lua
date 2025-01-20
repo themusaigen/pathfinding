@@ -61,6 +61,25 @@ function BinaryHeap:push(value)
   sift_up(self, #self)
 end
 
+--- Removes an element from heap.
+---@param idx integer
+function BinaryHeap:remove(idx)
+  assert(type(idx) == "number")
+  assert(idx % 1 == 0)
+  assert(#self >= idx)
+
+  -- Remove element from list.
+  table.remove(self._data, idx)
+end
+
+--- Removes an element from heap and replaces it with new one.
+---@param idx integer
+---@param value any
+function BinaryHeap:repush(idx, value)
+  self:remove(idx)
+  self:push(value)
+end
+
 --- Removes the first element in the Heap and returns it
 ---@return any
 function BinaryHeap:pop()
