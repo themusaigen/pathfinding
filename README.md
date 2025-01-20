@@ -63,6 +63,10 @@ local default_configuration = {
       Point.new(...),
       -- other points
     }
+  end,
+  -- A function that checks whether this point has reached the end of the path. By default, this is the Euclidean distance, which is less than `Step` or equal.
+  ReachedEnd = function(self, end_point: Vector, point: Vector)
+    return (end_point - point):length() <= self.Step
   end
 }
 ```
@@ -71,6 +75,9 @@ local default_configuration = {
 ## References
 * [A* (RU)](https://ru.wikipedia.org/wiki/A*)
 * [A* (EN)](https://en.wikipedia.org/wiki/A*_search_algorithm)
+* [Theta* (EN)](https://en.wikipedia.org/wiki/Theta*)
+* [FiveTuning](https://www.blast.hk/threads/182733/)
+* [GTA NavMesh](https://www.blast.hk/threads/228996/) a.k.a [this](https://www.blast.hk/threads/198094/)
 
 ## See also
 

@@ -1,8 +1,8 @@
--- File: astar.lua
--- Description: The implementation of A* algorithm.
+-- File: thetastar.lua
+-- Description: The implementation of Theta* algorithm (that based on A*).
 -- Author: themusaigen
 
-local astar = {}
+local thetastar = {}
 
 -- Node class.
 local Node = require("pathfinding.node")
@@ -18,7 +18,7 @@ local utility = require("pathfinding.utility")
 ---@param goal Vector
 ---@param configuration Configuration|nil
 ---@return Vector[]
-function astar:process(start, goal, configuration)
+function thetastar:process(start, goal, configuration)
   configuration = utility.create_configuration(configuration)
 
   -- Create begin and end node.
@@ -66,34 +66,43 @@ function astar:process(start, goal, configuration)
 
     -- Iterate around all neighbors.
     for _, neighbor in ipairs(neighbors) do
-      -- If we not visited that neighbor already.
       if not utility.find_node(visited, neighbor, configuration) then
-        -- Calculate tentative G score.
-        local tentative = node.g + configuration:Heuristic(neighbor.point, node.point)
+        local success, key = utility.find_node(tree:data(), neighbor, configuration)
 
-        -- Check is neighbor on tree.
-        local success, idx = utility.find_node(tree:data(), neighbor, configuration)
-        if success then
-          -- Neighbor on the tree.
-          local nfo = tree:get(idx)
-          -- The current path is better than previous one.
-          if tentative < nfo.g then
-            nfo.g = tentative
-            nfo.h = configuration:Heuristic(end_node.point, nfo.point)
-            nfo.f = nfo.g + nfo.h
-            nfo.parent = node
+        if not success then
+          neighbor.g = math.huge
+        else
+          neighbor = tree:get(key)
+        end
 
-            -- Sort all nodes.
-            tree = BinaryHeap.heapify(tree:data())
+        if node.parent and configuration:Collision(node.parent.point, neighbor.point) then
+          local parent_score = node.parent.g + configuration:Heuristic(node.parent.point, neighbor.point)
+          if parent_score < neighbor.g then
+            neighbor.g = parent_score
+            neighbor.h = configuration:Heuristic(end_node.point, neighbor.point)
+            neighbor.f = neighbor.g + neighbor.h
+            neighbor.parent = node.parent
+
+            if success then
+              tree = BinaryHeap.heapify(tree:data())
+            else
+              tree:push(neighbor)
+            end
           end
         else
-          neighbor.g = tentative
-          neighbor.h = configuration:Heuristic(end_node.point, neighbor.point)
-          neighbor.f = neighbor.g + neighbor.h
-          neighbor.parent = node
+          local node_score = node.g + configuration:Heuristic(node.point, neighbor.point)
+          if node_score < neighbor.g then
+            neighbor.g = node_score
+            neighbor.h = configuration:Heuristic(end_node.point, neighbor.point)
+            neighbor.f = neighbor.g + neighbor.h
+            neighbor.parent = node
 
-          -- Add new node into the tree.
-          tree:push(neighbor)
+            if success then
+              tree = BinaryHeap.heapify(tree:data())
+            else
+              tree:push(neighbor)
+            end
+          end
         end
       end
     end
@@ -103,4 +112,4 @@ function astar:process(start, goal, configuration)
   return {}
 end
 
-return astar
+return thetastar

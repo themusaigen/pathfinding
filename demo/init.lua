@@ -34,9 +34,11 @@ function main()
     b = Point.new(getCharCoordinates(PLAYER_PED))
   end)
 
-  sampRegisterChatCommand("path", function()
+  sampRegisterChatCommand("path", function(arg)
+    arg = arg and ((#arg > 0) and arg or nil) or nil
+
     if a and b then
-      local out = pathfinding:process("a*", a, b)
+      local out = pathfinding:process(arg or "a*", a, b)
 
       if out and #out > 0 then
         path = out
