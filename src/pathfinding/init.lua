@@ -5,9 +5,17 @@
 local pathfinding = {
   _NAME = "Pathfinding",
   _DESCRIPTION = "Library for implementing pathfinding algorithms in GTA:SA",
-  _VERSION = "1.2.1",
-  _RELEASE = "alpha",
-  _AUTHOR = "Musaigen <blast.hk/members/194978/>"
+  _VERSION = "2.0.0",
+  _RELEASE = "release",
+  _AUTHOR = "Musaigen <blast.hk/members/194978/>",
+  _URL = "https://github.com/themusaigen/pathfinding",
+  _TOPIC_URL = "https://www.blast.hk/threads/229343/",
+
+  -- The interface of the `pathfinding` library.
+  INTERFACE = {
+    Point              = require("pathfinding.point"),
+    AstarConfiguration = require("pathfinding.configuration.astar")
+  }
 }
 
 -- The list for replaces in algorithm names.
@@ -15,13 +23,12 @@ local possible_replaces = {
   ["*"] = "star"
 }
 
+---@alias FunctionKey string | "heuristics" | "is_end_reached" | "validate" | "collision" | "neighbors"
+---@alias ValueKey string | "step" | FunctionKey
+
 ---@class Configuration
----@field Validate fun(self: Configuration, point: Vector): boolean
----@field Collision fun(self: Configuration, target: Vector, origin: Vector): boolean
----@field Heuristic fun(self: Configuration, target: Vector, origin: Vector): number
----@field Neighbors fun(self: Configuration, step: number): Vector[]
----@field ReachedEnd fun(self: Configuration, end_point: Vector, point: Vector): boolean
----@field Step number
+---@field get fun(self: Configuration, key: ValueKey): any
+---@field call fun(self: Configuration, key: FunctionKey, ...: any): any
 
 ---@class Algorithm
 ---@field process fun(self: Algorithm, start: Vector, goal: Vector, configuration: Configuration|nil): Vector[]
@@ -59,8 +66,5 @@ function pathfinding:process(algorithm, start, goal, configuration)
   -- Process pathfinding.
   return algorithms[algorithm]:process(start, goal, configuration)
 end
-
--- Add `Point` class for user.
-pathfinding.Point = require("pathfinding.point")
 
 return pathfinding

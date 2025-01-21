@@ -10,23 +10,26 @@ local Node = require("pathfinding.node")
 -- BinaryHeap class.
 local BinaryHeap = require("pathfinding.binaryheap")
 
+-- AstarConfiguration class.
+local AstarConfiguration = require("pathfinding.configuration.astar")
+
 -- Utilities.
 local utility = require("pathfinding.utility")
 
 --- Process A* algorithm.
 ---@param start Vector
 ---@param goal Vector
----@param configuration Configuration|nil
+---@param configuration AstarConfiguration|nil
 ---@return Vector[]
 function astar:process(start, goal, configuration)
-  configuration = utility.create_configuration(configuration)
+  configuration = configuration or AstarConfiguration.new()
 
   -- Create begin and end node.
   local begin_node = Node.new(start)
   local end_node = Node.new(goal)
 
   -- Calculate heuristics between goal and start.
-  begin_node.f = configuration:Heuristic(goal, start)
+  begin_node.f = configuration:call("heuristics", goal, start)
 
   -- Initialize binary heap.
   local tree = BinaryHeap.new()
@@ -41,7 +44,7 @@ function astar:process(start, goal, configuration)
     local node = tree:pop()
 
     -- If we too close to the end node, force that case.
-    if configuration:ReachedEnd(end_node.point, node.point) then
+    if configuration:call("is_end_reached", end_node.point, node.point) then
       -- Mark current node as parent to reconstruct path properly.
       end_node.parent = node
 
@@ -54,11 +57,11 @@ function astar:process(start, goal, configuration)
 
     -- Get neighbors to this node.
     local neighbors = {}
-    for _, neighbor in ipairs(configuration:Neighbors(configuration.Step)) do
+    for _, neighbor in ipairs(configuration:call("neighbors", configuration:get("step"))) do
       local next_point = node.point + neighbor
 
-      if configuration:Validate(next_point) then
-        if configuration:Collision(next_point, node.point) then
+      if configuration:call("validate", next_point) then
+        if configuration:call("collision", next_point, node.point) then
           neighbors[#neighbors + 1] = Node.new(next_point)
         end
       end
@@ -69,7 +72,7 @@ function astar:process(start, goal, configuration)
       -- If we not visited that neighbor already.
       if not utility.find_node(visited, neighbor, configuration) then
         -- Calculate tentative G score.
-        local tentative = node.g + configuration:Heuristic(neighbor.point, node.point)
+        local tentative = node.g + configuration:call("heuristics", neighbor.point, node.point)
 
         -- Check is neighbor on tree.
         local success, idx = utility.find_node(tree:data(), neighbor, configuration)
@@ -79,7 +82,7 @@ function astar:process(start, goal, configuration)
           -- The current path is better than previous one.
           if tentative < nfo.g then
             nfo.g = tentative
-            nfo.h = configuration:Heuristic(end_node.point, nfo.point)
+            nfo.h = configuration:call("heuristics", end_node.point, nfo.point)
             nfo.f = nfo.g + nfo.h
             nfo.parent = node
 
@@ -88,7 +91,7 @@ function astar:process(start, goal, configuration)
           end
         else
           neighbor.g = tentative
-          neighbor.h = configuration:Heuristic(end_node.point, neighbor.point)
+          neighbor.h = configuration:call("heuristics", end_node.point, neighbor.point)
           neighbor.f = neighbor.g + neighbor.h
           neighbor.parent = node
 
