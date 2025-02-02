@@ -2,37 +2,34 @@
 -- Description: Implementation of a coordinate point class in 3D space.
 -- Author: themusaigen
 
----@class Point
+---@class pathfinding.Point
 local Point = {}
-Point.__call = function(self, ...)
-  return Point.new(...)
-end
 
----@class Vector
+---@class pathfinding.Vector
 ---@field x number
 ---@field y number
 ---@field z number
----@field get fun(self: Vector): (number, number, number)
----@field length fun(self: Vector): (number)
----@field normalize fun(self: Vector): (number)
----@field zeroNearZero fun(self: Vector)
----@field zero_near_zero fun(self: Vector)
----@field dotProduct fun(self: Vector, other: Vector): number
----@field dot_product fun(self: Vector, other: Vector): number
----@field crossProduct fun(self: Vector, other: Vector)
----@field cross_product fun(self: Vector, other: Vector)
----@operator add(Vector): Vector
----@operator mul(number): Vector
----@operator mul(Vector): Vector
----@operator sub(Vector): Vector
+---@field get fun(self: pathfinding.Vector): (number, number, number)
+---@field length fun(self: pathfinding.Vector): (number)
+---@field normalize fun(self: pathfinding.Vector): (number)
+---@field zeroNearZero fun(self: pathfinding.Vector)
+---@field zero_near_zero fun(self: pathfinding.Vector)
+---@field dotProduct fun(self: pathfinding.Vector, other: pathfinding.Vector): number
+---@field dot_product fun(self: pathfinding.Vector, other: pathfinding.Vector): number
+---@field crossProduct fun(self: pathfinding.Vector, other: pathfinding.Vector)
+---@field cross_product fun(self: pathfinding.Vector, other: pathfinding.Vector)
+---@operator add(pathfinding.Vector): pathfinding.Vector
+---@operator mul(number): pathfinding.Vector
+---@operator mul(pathfinding.Vector): pathfinding.Vector
+---@operator sub(pathfinding.Vector): pathfinding.Vector
 
----@type fun(x: number|integer|nil, y: number|integer|nil, z: number|integer|nil): Vector
+---@type fun(x: number|integer|nil, y: number|integer|nil, z: number|integer|nil): pathfinding.Vector
 local Vector3D = require("vector3d")
 
 --- Creates new `Point` class instance.
 ---@param x any
 ---@param ... any
----@return Vector
+---@return pathfinding.Vector
 function Point.new(x, ...)
   if type(x) == "table" then
     if type(x[0]) == "number" then

@@ -2,13 +2,13 @@
 -- Description: A implementation of the binary heap class for pathfinding algorithms.
 -- Author: themusaigen
 
----@class BinaryHeap
+---@class pathfinding.BinaryHeap
 ---@field private _data table
 local BinaryHeap = {}
 BinaryHeap.__index = BinaryHeap
 
 --- Creates new `Heap` class instance.
----@return BinaryHeap
+---@return pathfinding.BinaryHeap
 function BinaryHeap.new()
   return setmetatable({ _data = {} }, BinaryHeap)
 end
@@ -98,7 +98,7 @@ end
 
 --- Converts a table to a Heap. Will destroy the provided table
 ---@param list table
----@return BinaryHeap
+---@return pathfinding.BinaryHeap
 function BinaryHeap.heapify(list)
   assert(type(list) == "table")
 

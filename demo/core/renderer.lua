@@ -40,10 +40,14 @@ function renderer.convert_color(float4)
 end
 
 --- Converts 3D position to screen position, also checks is point visible on screen.
----@param pos Vector
+---@param pos pathfinding.Vector
 ---@return boolean
 ---@return ImVec2|nil
 local function convert_3d_to_screen(pos)
+  if not pos then
+    return false, nil
+  end
+
   if isPointOnScreen(pos.x, pos.y, pos.z, 0) then
     return true, ImVec2(convert3DCoordsToScreen(pos:get()))
   else
@@ -53,8 +57,8 @@ end
 
 --- Draws a line in 3D space.
 ---@param drawlist table
----@param pos0 Vector
----@param pos1 Vector
+---@param pos0 pathfinding.Vector
+---@param pos1 pathfinding.Vector
 ---@param color integer
 ---@param thickness number|nil
 function renderer.draw_line3d(drawlist, pos0, pos1, color, thickness)
@@ -69,7 +73,7 @@ end
 --- Draws a text.
 ---@param drawlist table
 ---@param text string
----@param pos Vector
+---@param pos pathfinding.Vector
 ---@param color integer
 ---@param shadow boolean|nil
 function renderer.draw_text(drawlist, text, pos, color, shadow)
@@ -87,10 +91,10 @@ end
 
 --- Draws one of rect sides (bottom, top)
 ---@param drawlist table
----@param a Vector
----@param lt Vector # Left top offset.
----@param rt Vector # Right top offset.
----@param rb Vector # Right bottom offset.
+---@param a pathfinding.Vector
+---@param lt pathfinding.Vector # Left top offset.
+---@param rt pathfinding.Vector # Right top offset.
+---@param rb pathfinding.Vector # Right bottom offset.
 ---@param color integer
 ---@param thickness number|nil
 function renderer.draw_rect_side(drawlist, a, lt, rt, rb, color, thickness)
@@ -102,10 +106,10 @@ end
 
 --- Draws rect edges.
 ---@param drawlist table
----@param a Vector
----@param lt Vector # Left top offset.
----@param rt Vector # Right top offset.
----@param rb Vector # Right bottom offset.
+---@param a pathfinding.Vector
+---@param lt pathfinding.Vector # Left top offset.
+---@param rt pathfinding.Vector # Right top offset.
+---@param rb pathfinding.Vector # Right bottom offset.
 ---@param color integer
 ---@param thickness number|nil
 function renderer.draw_rect_edges(drawlist, a, lt, rt, rb, height, color, thickness)
@@ -122,8 +126,8 @@ end
 --- Draws the area
 ---@param drawlist table
 ---@param id number
----@param a Vector
----@param b Vector
+---@param a pathfinding.Vector
+---@param b pathfinding.Vector
 ---@param color integer
 ---@param thickness number|nil
 ---@param text_color integer
@@ -158,7 +162,7 @@ end
 
 --- Renders a path.
 ---@param drawlist table
----@param path Vector[]
+---@param path pathfinding.Vector[]
 ---@param color integer
 ---@param thickness number|nil
 function renderer.draw_path(drawlist, path, color, thickness)
@@ -167,6 +171,10 @@ function renderer.draw_path(drawlist, path, color, thickness)
     local next_point = path[i + 1]
 
     renderer.draw_line3d(drawlist, point, next_point, color, thickness)
+    if (i == 1) then
+      renderer.draw_text(drawlist, "Point #" .. i, point, -1, true)
+    end
+    renderer.draw_text(drawlist, "Point #" .. (i + 1), next_point, -1, true)
   end
 end
 

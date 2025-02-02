@@ -17,10 +17,10 @@ local AstarConfiguration = require("pathfinding.configuration.astar")
 local utility = require("pathfinding.utility")
 
 --- Process Theta* algorithm.
----@param start Vector
----@param goal Vector
----@param configuration AstarConfiguration|nil
----@return Vector[]
+---@param start pathfinding.Vector
+---@param goal pathfinding.Vector
+---@param configuration pathfinding.AstarConfiguration|nil
+---@return pathfinding.Vector[]
 function thetastar:process(start, goal, configuration)
   configuration = configuration or AstarConfiguration.new()
 
@@ -34,6 +34,16 @@ function thetastar:process(start, goal, configuration)
   -- Initialize binary heap.
   local tree = BinaryHeap.new()
   tree:push(begin_node)
+
+  -- Check for collisions in begin and end point.
+  -- If we have collision then this points is blocked.
+  -- So we must return empty path to prevent infinity loop.
+  local height_point = { x = 0, y = 0, z = 1 }
+  if not configuration:call("collision", start, start + height_point) then
+    return {}
+  elseif not configuration:call("collision", goal, goal + height_point) then
+    return {}
+  end
 
   -- Initialize array of visited nodes.
   local visited = {}

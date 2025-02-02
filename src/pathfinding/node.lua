@@ -2,19 +2,19 @@
 -- Description: Implementation of the graph node class to be used for pathfinding algorithms.
 -- Author: themusaigen
 
----@class Node
----@field point Vector
+---@class pathfinding.Node
+---@field point pathfinding.Vector
 ---@field g number
 ---@field h number
 ---@field f number
----@field parent Node|nil
+---@field parent pathfinding.Node|nil
 local Node = {}
 Node.__classname = "Node"
 Node.__index = Node
 
 --- Creates new `Node` class instance.
----@param point Vector
----@return Node
+---@param point pathfinding.Vector
+---@return pathfinding.Node
 function Node.new(point)
   assert(type(point) == "table")
 
@@ -30,8 +30,8 @@ function Node.new(point)
 end
 
 --- Compares the total cost of two nodes and returns the lowest.
----@param a Node
----@param b Node
+---@param a pathfinding.Node
+---@param b pathfinding.Node
 ---@return boolean
 function Node.__lt(a, b)
   assert(type(a) == "table")
@@ -42,8 +42,8 @@ function Node.__lt(a, b)
 end
 
 --- Compares the points of two nodes.
----@param a Node
----@param b Node
+---@param a pathfinding.Node
+---@param b pathfinding.Node
 ---@return boolean
 function Node.__eq(a, b)
   assert(type(a) == "table")

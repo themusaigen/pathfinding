@@ -18,8 +18,8 @@ function utility.reverse(list)
 end
 
 --- Reconstructs path from begin to end.
----@param node Node
----@return Vector[]
+---@param node pathfinding.Node
+---@return pathfinding.Vector[]
 function utility.reconstruct_path(node)
   local path = {}
 
@@ -38,8 +38,8 @@ end
 
 --- Try to find node in list.
 ---@param list table
----@param n Node
----@param configuration Configuration
+---@param n pathfinding.Node
+---@param configuration pathfinding.Configuration
 ---@return boolean, number
 function utility.find_node(list, n, configuration)
   for idx = 1, #list do
@@ -50,6 +50,17 @@ function utility.find_node(list, n, configuration)
     end
   end
   return false, -1
+end
+
+--- Traverses through the list and call iterator function.
+---@param list table
+---@param fun fun(index: number, value: any)
+function utility.traverse(list, fun)
+  for index, value in ipairs(list) do
+    if (fun(index, value) == false) then
+      break
+    end
+  end
 end
 
 return utility
