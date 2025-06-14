@@ -54,10 +54,6 @@ function astar:process(start, goal, configuration)
   -- Initialize array of visited nodes.
   local visited = {}
 
-  -- Nodes HashMap for O(1) access.
-  local nodes = {}
-  nodes[hash.hash_point(begin_node.point)] = begin_node
-
   -- Until empty, process pathfinding.
   while #tree > 0 do
     -- Get node with lowest `f` score.
@@ -95,17 +91,14 @@ function astar:process(start, goal, configuration)
       -- Calculate tentative G score.
       local tentative = node.g + configuration:call("heuristics", neighbor.point, node.point)
 
-      -- Cache neighbor hash.
-      local neighbor_hash = hash.hash_point(neighbor.point)
-
       -- Check is neighbor on tree.
-      local nfo = nodes[neighbor_hash]
-      local index = -1
-      if nfo then
-        index = tree:index_of_by_hash(neighbor_hash)
+      local index = tree:index_of(neighbor)
+      local nfo = nil
+      if not (index == -1) then
+        nfo = tree:get(index)
       end
 
-      if nfo and not (index == -1) then
+      if nfo then
         -- The current path is better than previous one.
         if tentative < nfo.g then
           nfo.g = tentative
@@ -124,9 +117,6 @@ function astar:process(start, goal, configuration)
 
         -- Add new node into the tree.
         tree:push(neighbor)
-
-        -- Add new node to the hash map.
-        nodes[neighbor_hash] = neighbor
       end
     end
   end

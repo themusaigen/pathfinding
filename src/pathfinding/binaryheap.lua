@@ -5,14 +5,14 @@
 ---@class pathfinding.BinaryHeap
 ---@field private _data table
 ---@field private _size number
----@field private _hashes {[string]: number}
+---@field private _indices {[string]: number}
 local BinaryHeap = {}
 BinaryHeap.__index = BinaryHeap
 
 --- Creates new `Heap` class instance.
 ---@return pathfinding.BinaryHeap
 function BinaryHeap.new()
-	return setmetatable({ _data = {}, _hashes = {}, _size = 0 }, BinaryHeap)
+	return setmetatable({ _data = {}, _indices = {}, _size = 0 }, BinaryHeap)
 end
 
 local function sift_up(heap, index)
@@ -20,8 +20,8 @@ local function sift_up(heap, index)
 		local parent = math.floor(index / 2)
 		if heap:get(index) < heap:get(parent) then
 			-- Update hashes.
-			heap._hashes[tostring(heap._data[parent])] = index
-			heap._hashes[tostring(heap._data[index])] = parent
+			heap._indices[tostring(heap._data[parent])] = index
+			heap._indices[tostring(heap._data[index])] = parent
 
 			-- Swap elements.
 			heap._data[parent], heap._data[index] = heap._data[index], heap._data[parent]
@@ -50,8 +50,8 @@ local function sift_down(heap, index)
 
 		if not (smallest == index) then
 			-- Update hashes.
-			heap._hashes[tostring(heap._data[smallest])] = index
-			heap._hashes[tostring(heap._data[index])] = smallest
+			heap._indices[tostring(heap._data[smallest])] = index
+			heap._indices[tostring(heap._data[index])] = smallest
 
 			-- Swap elements.
 			heap._data[smallest], heap._data[index] = heap._data[index], heap._data[smallest]
@@ -69,7 +69,7 @@ end
 function BinaryHeap:push(value)
 	table.insert(self._data, value)
 	self._size = self._size + 1
-	self._hashes[tostring(value)] = self._size
+	self._indices[tostring(value)] = self._size
 	sift_up(self, self._size)
 end
 
@@ -101,8 +101,8 @@ function BinaryHeap:pop()
 	local out = self._data[1]
 	local last = self._data[self._size]
 
-	self._hashes[tostring(out)] = nil
-	self._hashes[tostring(last)] = 1
+	self._indices[tostring(out)] = nil
+	self._indices[tostring(last)] = 1
 
 	self._data[1] = last
 
@@ -115,13 +115,26 @@ function BinaryHeap:pop()
 	return out
 end
 
---- Searches the value into the Heap and returns it index.
+--- Returns the index of a given element in the heap.
+---
+--- This function converts the element to a string and uses it as a hash key
+--- to look up the position in the internal `_indices` table.
+---
+---@param element any # The element to find in the heap.
+---@return integer # The 1-based index of the element if found, or -1 if not found.
 function BinaryHeap:index_of(element)
 	return self:index_of_by_hash(tostring(element))
 end
 
+--- Returns the index of an element using its hash as a lookup key.
+---
+--- This is an internal helper method that searches for the element's index
+--- by checking the `_indices` map directly.
+---
+---@param hash string # The hash key used to identify the element.
+---@return integer # The 1-based index of the element if found, or -1 if not found.
 function BinaryHeap:index_of_by_hash(hash)
-	return self._hashes[hash] or -1
+	return self._indices[hash] or -1
 end
 
 --- Converts a table to a Heap. Will destroy the provided table
