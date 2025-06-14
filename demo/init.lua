@@ -125,7 +125,15 @@ local function draw_pathing_tab()
 
     if imgui.Button("Process pathfinding", button_size) then
       if path.a and path.b then
+        local time = os.clock()
+        local distance = (path.b - path.a):length()
+
         path.output = pathfinding:process(algorithms[algorithm[0] + 1], path.a, path.b)
+
+        sampAddChatMessage(
+          ("Took %.3f seconds to compute path with %.2f distance"):format(os.clock() - time, distance),
+          -1
+        )
       end
     end
   end
@@ -209,7 +217,7 @@ local function draw_dynamic_pathing_tab()
           dynbuilder:set_configuration(AstarConfiguration.new())
         end
 
-        dynbuilder:set_algorithm(algorithm[dyn_algorithm[0] + 1])
+        dynbuilder:set_algorithm(algorithms[dyn_algorithm[0] + 1])
         dynbuilder:set_start_point(dynpath.a)
         dynbuilder:set_goal_point(dynpath.b)
         dynbuilder:set_delay(dynamic_delay[0])
@@ -247,7 +255,16 @@ local function draw_paths(drawlist, paths)
       local area_color = renderer.convert_color(areas_color)
       local text_color = renderer.convert_color(areas_text_color)
 
-      renderer.draw_area(drawlist, idx, path.a, path.b, area_color, areas_thickness[0], text_color, areas_text_shadow[0])
+      renderer.draw_area(
+        drawlist,
+        idx,
+        path.a,
+        path.b,
+        area_color,
+        areas_thickness[0],
+        text_color,
+        areas_text_shadow[0]
+      )
     end
 
     if path.output and #path.output > 0 then
@@ -287,8 +304,11 @@ imgui.OnFrame(function()
   return window[0] and not isGamePaused()
 end, function()
   imgui.SetNextWindowSize(ImVec2(600, 400), imgui.Cond.FirstUseEver)
-  imgui.SetNextWindowPos(ImVec2(screen_resolution[1] / 2, screen_resolution[2] / 2), imgui.Cond.FirstUseEver,
-    ImVec2(0.5, 0.5))
+  imgui.SetNextWindowPos(
+    ImVec2(screen_resolution[1] / 2, screen_resolution[2] / 2),
+    imgui.Cond.FirstUseEver,
+    ImVec2(0.5, 0.5)
+  )
 
   imgui.Begin(window_name, window)
 

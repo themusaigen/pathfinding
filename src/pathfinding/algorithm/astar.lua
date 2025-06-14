@@ -16,6 +16,9 @@ local AstarConfiguration = require("pathfinding.configuration.astar")
 -- Utilities.
 local utility = require("pathfinding.utility")
 
+-- Hasher.
+local hash = require("pathfinding.hash")
+
 --- Process A* algorithm.
 ---@param start pathfinding.Vector
 ---@param goal pathfinding.Vector
@@ -39,14 +42,21 @@ function astar:process(start, goal, configuration)
   -- If we have collision then this points is blocked.
   -- So we must return empty path to prevent infinity loop.
   local height_point = { x = 0, y = 0, z = 1 }
-  if not configuration:call("collision", start, start + height_point) then
+  if configuration:call("collision", start, start + height_point) then
     return {}
-  elseif not configuration:call("collision", goal, goal + height_point) then
+  elseif configuration:call("collision", goal, goal + height_point) then
     return {}
   end
 
+  -- Cache step.
+  local step = configuration:get("step")
+
   -- Initialize array of visited nodes.
   local visited = {}
+
+  -- Nodes HashMap for O(1) access.
+  local nodes = {}
+  nodes[hash.hash_point(begin_node.point)] = begin_node
 
   -- Until empty, process pathfinding.
   while #tree > 0 do
@@ -63,51 +73,60 @@ function astar:process(start, goal, configuration)
     end
 
     -- Mark as visited.
-    visited[#visited + 1] = node
+    visited[hash.hash_point(node.point)] = true
 
     -- Get neighbors to this node.
+    local potential_neighbors = configuration:call("neighbors", step)
     local neighbors = {}
-    for _, neighbor in ipairs(configuration:call("neighbors", configuration:get("step"))) do
+    for _, neighbor in ipairs(potential_neighbors) do
       local next_point = node.point + neighbor
 
-      if configuration:call("validate", next_point) then
-        if configuration:call("collision", next_point, node.point) then
-          neighbors[#neighbors + 1] = Node.new(next_point)
+      if not visited[hash.hash_point(next_point)] then
+        if configuration:call("validate", next_point) then
+          if not configuration:call("collision", next_point, node.point) then
+            neighbors[#neighbors + 1] = Node.new(next_point)
+          end
         end
       end
     end
 
     -- Iterate around all neighbors.
     for _, neighbor in ipairs(neighbors) do
-      -- If we not visited that neighbor already.
-      if not utility.find_node(visited, neighbor, configuration) then
-        -- Calculate tentative G score.
-        local tentative = node.g + configuration:call("heuristics", neighbor.point, node.point)
+      -- Calculate tentative G score.
+      local tentative = node.g + configuration:call("heuristics", neighbor.point, node.point)
 
-        -- Check is neighbor on tree.
-        local success, idx = utility.find_node(tree:data(), neighbor, configuration)
-        if success then
-          -- Neighbor on the tree.
-          local nfo = tree:get(idx)
-          -- The current path is better than previous one.
-          if tentative < nfo.g then
-            nfo.g = tentative
-            nfo.h = configuration:call("heuristics", end_node.point, nfo.point)
-            nfo.f = nfo.g + nfo.h
-            nfo.parent = node
+      -- Cache neighbor hash.
+      local neighbor_hash = hash.hash_point(neighbor.point)
 
-            -- Sort all nodes.
-            tree:repush(idx, nfo)
-          end
-        else
-          neighbor.g = tentative
-          neighbor.h = configuration:call("heuristics", end_node.point, neighbor.point)
-          neighbor.f = neighbor.g + neighbor.h
-          neighbor.parent = node
+      -- Check is neighbor on tree.
+      local nfo = nodes[neighbor_hash]
+      local index = -1
+      if nfo then
+        index = tree:index_of_by_hash(neighbor_hash)
+      end
 
-          -- Add new node into the tree.
-          tree:push(neighbor)
+      if nfo and not (index == -1) then
+        -- The current path is better than previous one.
+        if tentative < nfo.g then
+          nfo.g = tentative
+          nfo.h = configuration:call("heuristics", end_node.point, nfo.point)
+          nfo.f = node.g + node.h
+          nfo.parent = node
+
+          -- Sort all nodes.
+          tree:resort(index)
         end
+      else
+        neighbor.g = tentative
+        neighbor.h = configuration:call("heuristics", end_node.point, neighbor.point)
+        neighbor.f = neighbor.g + neighbor.h
+        neighbor.parent = node
+
+        -- Add new node into the tree.
+        tree:push(neighbor)
+
+        -- Add new node to the hash map.
+        nodes[neighbor_hash] = neighbor
       end
     end
   end

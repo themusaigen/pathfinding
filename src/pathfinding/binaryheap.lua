@@ -4,132 +4,160 @@
 
 ---@class pathfinding.BinaryHeap
 ---@field private _data table
+---@field private _size number
+---@field private _hashes {[string]: number}
 local BinaryHeap = {}
 BinaryHeap.__index = BinaryHeap
 
 --- Creates new `Heap` class instance.
 ---@return pathfinding.BinaryHeap
 function BinaryHeap.new()
-  return setmetatable({ _data = {} }, BinaryHeap)
+	return setmetatable({ _data = {}, _hashes = {}, _size = 0 }, BinaryHeap)
 end
 
 local function sift_up(heap, index)
-  while (index > 1) do
-    local parent = math.floor(index / 2)
-    if heap:get(index) < heap:get(parent) then
-      heap._data[parent], heap._data[index] = heap._data[index], heap._data[parent]
+	while index > 1 do
+		local parent = math.floor(index / 2)
+		if heap:get(index) < heap:get(parent) then
+			-- Update hashes.
+			heap._hashes[tostring(heap._data[parent])] = index
+			heap._hashes[tostring(heap._data[index])] = parent
 
-      index = parent
-    else
-      break
-    end
-  end
+			-- Swap elements.
+			heap._data[parent], heap._data[index] = heap._data[index], heap._data[parent]
+
+			-- Next element.
+			index = parent
+		else
+			break
+		end
+	end
 end
 
 local function sift_down(heap, index)
-  while true do
-    local left = index * 2
-    local right = index * 2 + 1
-    local smallest = index
+	while true do
+		local left = index * 2
+		local right = index * 2 + 1
+		local smallest = index
 
-    if left <= #heap and (heap:get(left) < heap:get(smallest)) then
-      smallest = left
-    end
+		if left <= #heap and (heap:get(left) < heap:get(smallest)) then
+			smallest = left
+		end
 
-    if right <= #heap and (heap:get(right) < heap:get(smallest)) then
-      smallest = right
-    end
+		if right <= #heap and (heap:get(right) < heap:get(smallest)) then
+			smallest = right
+		end
 
-    if not (smallest == index) then
-      heap._data[smallest], heap._data[index] = heap._data[index], heap._data[smallest]
-      index = smallest
-    else
-      break
-    end
-  end
+		if not (smallest == index) then
+			-- Update hashes.
+			heap._hashes[tostring(heap._data[smallest])] = index
+			heap._hashes[tostring(heap._data[index])] = smallest
+
+			-- Swap elements.
+			heap._data[smallest], heap._data[index] = heap._data[index], heap._data[smallest]
+
+			-- Next element.
+			index = smallest
+		else
+			break
+		end
+	end
 end
 
 --- Adds an element to the Heap
 ---@param value any
 function BinaryHeap:push(value)
-  table.insert(self._data, value)
-
-  if #self <= 1 then
-    return
-  end
-
-  sift_up(self, #self)
+	table.insert(self._data, value)
+	self._size = self._size + 1
+	self._hashes[tostring(value)] = self._size
+	sift_up(self, self._size)
 end
 
---- Removes an element from heap.
----@param idx integer
-function BinaryHeap:remove(idx)
-  assert(type(idx) == "number")
-  assert(idx % 1 == 0)
-  assert(#self >= idx)
+--- Resortes the already stored value in heap.
+---@param index integer
+---@return boolean # Is we succesfully resorted that element.
+function BinaryHeap:resort(index)
+	local value = self:get(index)
+	if not value then
+		return false
+	end
 
-  -- Remove element from list.
-  table.remove(self._data, idx)
-end
+	if index > 1 and value < self:get(math.floor(index / 2)) then
+		sift_up(self, index)
+	else
+		sift_down(self, index)
+	end
 
---- Removes an element from heap and replaces it with new one.
----@param idx integer
----@param value any
-function BinaryHeap:repush(idx, value)
-  self:remove(idx)
-  self:push(value)
+	return true
 end
 
 --- Removes the first element in the Heap and returns it
 ---@return any
 function BinaryHeap:pop()
-  if #self > 0 then
-    local out = self:get(1)
-    self._data[1] = self:get(#self)
-    table.remove(self._data, #self._data)
+	if self._size == 0 then
+		return
+	end
 
-    if #self > 0 then
-      sift_down(self, 1)
-    end
+	local out = self._data[1]
+	local last = self._data[self._size]
 
-    return out
-  end
+	self._hashes[tostring(out)] = nil
+	self._hashes[tostring(last)] = 1
+
+	self._data[1] = last
+
+	table.remove(self._data, self._size)
+	self._size = self._size - 1
+	if #self > 0 then
+		sift_down(self, 1)
+	end
+
+	return out
+end
+
+--- Searches the value into the Heap and returns it index.
+function BinaryHeap:index_of(element)
+	return self:index_of_by_hash(tostring(element))
+end
+
+function BinaryHeap:index_of_by_hash(hash)
+	return self._hashes[hash] or -1
 end
 
 --- Converts a table to a Heap. Will destroy the provided table
 ---@param list table
 ---@return pathfinding.BinaryHeap
 function BinaryHeap.heapify(list)
-  assert(type(list) == "table")
+	assert(type(list) == "table")
 
-  local heap = BinaryHeap.new()
-  for i = #list, 1, -1 do
-    heap:push(list[i])
-    table.remove(list, i)
-  end
-  return heap
+	local heap = BinaryHeap.new()
+	for i = #list, 1, -1 do
+		heap:push(list[i])
+		table.remove(list, i)
+	end
+	return heap
 end
 
 --- Returns the value stored at specific index.
 ---@param index integer
 ---@return any
 function BinaryHeap:get(index)
-  assert(type(index) == "number")
-  assert(index % 1 == 0)
-  assert(index > 0)
-  return self._data[index]
+	assert(type(index) == "number")
+	assert(index % 1 == 0)
+	assert(index > 0)
+	return self._data[index]
 end
 
 --- Returns data table.
 ---@return table
 function BinaryHeap:data()
-  return self._data
+	return self._data
 end
 
 --- Returns the length of list
 ---@return integer
 function BinaryHeap:__len()
-  return #self._data
+	return self._size
 end
 
 return BinaryHeap

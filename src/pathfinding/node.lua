@@ -12,6 +12,9 @@ local Node = {}
 Node.__classname = "Node"
 Node.__index = Node
 
+-- Hash function.
+local hash = require("pathfinding.hash")
+
 --- Creates new `Node` class instance.
 ---@param point pathfinding.Vector
 ---@return pathfinding.Node
@@ -23,7 +26,7 @@ function Node.new(point)
     g = 0,
     h = 0,
     f = 0,
-    parent = nil
+    parent = nil,
   }, Node)
 
   return self
@@ -50,7 +53,13 @@ function Node.__eq(a, b)
   assert(type(b) == "table")
   assert(a.__classname == "Node")
   assert(b.__classname == "Node")
-  return (a.point.x == b.point.x) and (a.point.y == b.point.y) and (a.point.z == b.point.z)
+  return (b.point - a.point):length() < 1
+end
+
+--- Converts Node to the string.
+---@return string
+function Node:__tostring()
+  return hash.hash_point(self.point)
 end
 
 return Node

@@ -87,8 +87,19 @@ function DynamicPathBuilder:enable()
   -- To implement dynamic pathfinding, we need to use the collision method to account only for buildings as obstacles.
   local collision_backup = self.configuration:get("collision")
   self.configuration:set("collision", function(_, target, origin)
-    return isLineOfSightClear(origin.x, origin.y, origin.z, target.x, target.y, target.z, true, false, false, false,
-      false)
+    return not isLineOfSightClear(
+      origin.x,
+      origin.y,
+      origin.z,
+      target.x,
+      target.y,
+      target.z,
+      true,
+      false,
+      false,
+      false,
+      false
+    )
   end)
 
   -- Create new path.
@@ -103,11 +114,22 @@ function DynamicPathBuilder:enable()
   end
 
   local function process_line_of_sight(a, b)
-    return processLineOfSight(a.x, a.y, a.z, b.x, b.y, b.z, self.configuration:get("check_buildings"),
-      self.configuration:get("check_vehicles"), self.configuration:get("check_peds"),
-      self.configuration:get("check_objects"), self.configuration:get("check_particles"),
-      self.configuration:get("check_transparant_objects"), self.configuration:get("ignore_dynamic_objects"),
-      self.configuration:get("check_shootable_objects"))
+    return processLineOfSight(
+      a.x,
+      a.y,
+      a.z,
+      b.x,
+      b.y,
+      b.z,
+      self.configuration:get("check_buildings"),
+      self.configuration:get("check_vehicles"),
+      self.configuration:get("check_peds"),
+      self.configuration:get("check_objects"),
+      self.configuration:get("check_particles"),
+      self.configuration:get("check_transparant_objects"),
+      self.configuration:get("ignore_dynamic_objects"),
+      self.configuration:get("check_shootable_objects")
+    )
   end
 
   local function get_max_dimension_of_entity(entity_type, entity)
@@ -132,24 +154,28 @@ function DynamicPathBuilder:enable()
   end
 
   local function shift_point_at_free_space(point, direction)
-    local result, colpoint = process_line_of_sight(point, point + Point.new(0, 0, 0.5))
-    if result then
+    local height_point = Point.new(0, 0, 0.5)
+
+    local result, colpoint = process_line_of_sight(point, point + height_point)
+    while result do
       point = point + direction * get_max_dimension_of_entity(colpoint.entityType, colpoint.entity)
-      return shift_point_at_free_space(point)
-    else
-      return point
+
+      -- Update collision info.
+      result, colpoint = process_line_of_sight(point, point + height_point)
     end
+
+    return point
   end
 
-  local function get_free_point_avoiding_obstacles(a, b)
-    local result, colpoint = process_line_of_sight(a, b)
+  local function get_free_point_avoiding_obstacles(origin, target)
+    local result, colpoint = process_line_of_sight(origin, target)
     if result then
       local max_dimension = get_max_dimension_of_entity(colpoint.entityType, colpoint.entity)
       local colpos = Point.new(colpoint.pos)
 
-      local direction = b - a
+      local direction = target - origin
       direction:normalize()
-      local reversed_direction = a - b
+      local reversed_direction = origin - target
       reversed_direction:normalize()
 
       local free_point = shift_point_at_free_space(colpos + direction * max_dimension, reversed_direction)
@@ -161,7 +187,7 @@ function DynamicPathBuilder:enable()
         return free_point
       end
     else
-      return b
+      return target
     end
   end
 
@@ -195,12 +221,12 @@ function DynamicPathBuilder:enable()
 
         -- Start.
         local index = 1
-        while (index <= (length - 1)) do
+        while index <= (length - 1) do
           local point = self.path[index]
           local next_point = self.path[index + 1]
 
           -- No collisions, just set the points.
-          if self.configuration:call("collision", next_point, point) then
+          if not self.configuration:call("collision", next_point, point) then
             path[#path + 1] = point
 
             -- Go to the next pair of points.
@@ -225,20 +251,22 @@ function DynamicPathBuilder:enable()
             -- If path succesfully rebuilt.
             if #rebuilt_path > 0 then
               -- Add new points.
-              utility.traverse(rebuilt_path, function(_, value)
-                table.insert(path, value)
-              end)
+              table.move(rebuilt_path, 1, #rebuilt_path - 1, #path + 1, path)
 
               -- Get point that nearest to our last added point.
               local nearest_to_end_index = get_nearest_point_in_list(self.path, path[#path])
 
-              -- No infinty loops.
-              if (nearest_to_end_index <= index) then
-                nearest_to_end_index = index + 1
+              -- Avoid infinite loops and overlapping indices
+              if nearest_to_end_index <= index then
+                nearest_to_end_index = math.min(index + 1, #self.path)
               end
 
               -- Switch to the next point.
-              index = nearest_to_end_index
+              local last_index = index + 1
+              index = nearest_to_end_index + 1
+              if index == last_index then
+                break
+              end
             else
               break
             end
@@ -246,12 +274,12 @@ function DynamicPathBuilder:enable()
 
           -- If the new path is longer or the same as the old one, or there were...
           -- ..no collisions on the way. Then we update the dynamic path.
-          if (#path >= length) or (not have_collisions) then
+          local new_path_length = #path
+          if (new_path_length >= length) or not have_collisions then
             self.path_dynamic = path
           end
         end
       end
-
 
       -- Wait for next iteration.
       wait(self.delay)

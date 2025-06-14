@@ -5,7 +5,7 @@
 local pathfinding = {
   _NAME = "Pathfinding",
   _DESCRIPTION = "Library for implementing pathfinding algorithms in GTA:SA",
-  _VERSION = "2.1.0",
+  _VERSION = "3.0.0",
   _RELEASE = "release",
   _AUTHOR = "Musaigen <blast.hk/members/194978/>",
   _URL = "https://github.com/themusaigen/pathfinding",
@@ -13,11 +13,14 @@ local pathfinding = {
 
   -- The interface of the `pathfinding` library.
   INTERFACE = {
-    Point              = require("pathfinding.point"),
+    Point = require("pathfinding.point"),
     AstarConfiguration = require("pathfinding.configuration.astar"),
-
     DynamicPathBuilder = require("pathfinding.builder.dynamic"),
-  }
+    Node = require("pathfinding.node"),
+    Hash = require("pathfinding.hash"),
+    BinaryHeap = require("pathfinding.binaryheap"),
+    Utility = require("pathfinding.utility"),
+  },
 }
 
 ---@class pathfinding.Configuration
